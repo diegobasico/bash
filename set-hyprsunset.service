@@ -1,0 +1,9 @@
+[Unit]
+Description=Display Temperature and Brightness Cycle
+After=graphical-session.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/display-cycle.sh
+Environment=DISPLAY=:0
+Environment=WAYLAND_DISPLAY=wayland-0
