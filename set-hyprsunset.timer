@@ -1,10 +1,10 @@
 [Unit]
-Description=Run display cycle every 10 minutes
-Requires=display-cycle-user.service
+Description=Runs set-hyprsunset every 30 minutes
+Requires=set-hyprsunset.service
 
 [Timer]
-OnBootSec=1min
-OnUnitActiveSec=10min
+OnActiveSec=10sec
+OnUnitActiveSec=30min
 Persistent=true
 
 [Install]
