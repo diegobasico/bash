@@ -1,8 +1,6 @@
 #!/bin/bash
 
-# Display Temperature and Brightness Cycle Script
-# This script can install itself as a systemd service and timer
-
+CURRENT_DIR="$(dirname "${BASH_SOURCE[0]}")"
 SCRIPT_NAME="display-cycle"
 SCRIPT_DIR="$HOME/.local/bin"
 SCRIPT_PATH="$SCRIPT_DIR/$SCRIPT_NAME.sh"

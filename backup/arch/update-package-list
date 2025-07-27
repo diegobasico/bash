@@ -1,0 +1,8 @@
+#!/bin/bash
+
+BACKUP_DIR="/home/diego/backup/arch/"
+
+pacman -Qqen > "$BACKUP_DIR.qqen"
+pacman -Qqem > "$BACKUP_DIR.qqem"
+
+echo ":: Backup of package list was updated and saved to: $BACKUP_DIR"
