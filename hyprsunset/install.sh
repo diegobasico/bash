@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 CURRENT_DIR="$(dirname "${BASH_SOURCE[0]}")"
 BASENAME="set-hyprsunset"
 
