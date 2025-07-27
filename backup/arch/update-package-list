@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -e
 
-BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BASE_DIR="__INSTALL_DIR__"
 
 pacman -Qqen >"$BASE_DIR/backup.qqen"
 pacman -Qqem >"$BASE_DIR/backup.qqem"

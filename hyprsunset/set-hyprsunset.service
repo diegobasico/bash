@@ -4,7 +4,7 @@ After=graphical-session.target
 
 [Service]
 Type=oneshot
-ExecStart=/home/diego/Canotila/bash/set-hyprsunset.sh
+ExecStart=/home/diego/.local/bin/set-hyprsunset.sh
 Environment="XDG_RUNTIME_DIR=/run/user/1000"
 Environment="WAYLAND_DISPLAY=wayland-1"
 

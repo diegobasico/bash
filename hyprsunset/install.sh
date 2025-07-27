@@ -2,7 +2,7 @@
 
 set -e
 
-CURRENT_DIR="$(dirname "${BASH_SOURCE[0]}")"
+CURRENT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BASENAME="set-hyprsunset"
 
 BIN_DIR="$HOME/.local/bin/"
