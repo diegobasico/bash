@@ -1,8 +1,10 @@
 #!/bin/bash
 
-BACKUP_DIR="/home/diego/backup/arch/"
+set -e
 
-pacman -Qqen > "$BACKUP_DIR.qqen"
-pacman -Qqem > "$BACKUP_DIR.qqem"
+BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-echo ":: Backup of package list was updated and saved to: $BACKUP_DIR"
+pacman -Qqen >"$BASE_DIR/backup.qqen"
+pacman -Qqem >"$BASE_DIR/backup.qqem"
+
+echo ":: Backup of package list was updated and saved to: $BASE_DIR"
