@@ -1,0 +1,13 @@
+[Unit]
+Description=Tracks and Reports Battery Status
+After=graphical-session.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/diego/.local/bin/battery-notification.sh
+Environment="XDG_RUNTIME_DIR=/run/user/1000"
+Environment="WAYLAND_DISPLAY=wayland-1"
+Environment="XDG_CACHE_HOME=/home/diego/.cache"
+
+[Install]
+WantedBy=default.target

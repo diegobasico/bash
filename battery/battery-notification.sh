@@ -1,52 +1,73 @@
 #!/usr/bin/env bash
 
-# define levels and paths
+# Check for Hyprland session
+[[ $XDG_CURRENT_DESKTOP != "Hyprland" ]] && exit 0
+
+# Define battery thresholds and paths
 low=20
 lower=10
 critical=5
 state_file="$XDG_CACHE_HOME/battery-notification.state"
+log_file="$XDG_CACHE_HOME/battery-notification.log"
 battery_path="/sys/class/power_supply/BAT1"
 
-# checks if ".local/cache" and "battery_path" exists
+# Ensure cache and battery path exist
 mkdir -p "$(dirname "$state_file")"
 [[ ! -d $battery_path ]] && exit 1
 
-remaining_capacity=$(cat "$battery_path/capacity")
-battery_status=$(cat "$battery_path/status")
+# Read current battery capacity and status
+read -r remaining_capacity <"$battery_path/capacity"
+read -r battery_status <"$battery_path/status"
 
-# checks for last_state file content
+# Load last notification state
 last_state="none"
 [[ -f "$state_file" ]] && last_state=$(<"$state_file")
 
-#functions are easier to debug
+set_state() {
+  new_state=$1
+  echo "$new_state" >"$state_file"
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] Battery: $remaining_capacity% - Status: $battery_status - State: $new_state" >>"$log_file"
+}
+
 check_battery() {
-
-  if [[ "$battery_status" == "Discharging" ]]; then
-    if [[ "$remaining_capacity" -le "$critical" ]] && [[ "$last_state" != "critical" ]]; then
+  case "$battery_status" in
+  "Discharging")
+    if ((remaining_capacity <= critical)) && [[ $last_state != "critical" ]]; then
       notify-send -u critical "⚠️ Critical Low Battery" "Battery is at ${remaining_capacity}%"
-      echo "critical" >"$state_file"
+      set_state "critical"
 
-    elif [[ "$remaining_capacity" -le "$lower" ]] && [[ "$last_state" != "lower" ]]; then
+    elif ((remaining_capacity <= lower)) && [[ $last_state != "lower" ]]; then
       notify-send -u critical "🪫 Very Low Battery" "Battery is at ${remaining_capacity}%"
-      echo "lower" >"$state_file"
+      set_state "lower"
 
-    elif [[ "$remaining_capacity" -le "$low" ]] && [[ "$last_state" != "low" ]]; then
+    elif ((remaining_capacity <= low)) && [[ $last_state != "low" ]]; then
       notify-send -u critical "🪫 Low Battery" "Battery is at ${remaining_capacity}%"
-      echo "low" >"$state_file"
+      set_state "low"
 
-    elif [[ "$remaining_capacity" -gt "$low" ]] && [[ "$last_state" != "high" ]]; then
+    elif ((remaining_capacity > low)) && [[ $last_state != "high" ]]; then
       notify-send "🔋 Disconnected" "Battery is at ${remaining_capacity}%"
-      echo "high" >"$state_file"
-
+      set_state "high"
     fi
+    ;;
 
-  elif [[ "$battery_status" == "Charging" ]] && [[ "$last_state" != "charging" ]]; then
-    notify-send "🔌 Charging" "Device is charging now."
-    echo "charging" >"$state_file"
-  elif [[ "$battery_status" == "Full" ]] && [[ "$last_state" != "Full" ]]; then
-    notify-send "🔋 Full Charge" "Device is fully charged."
-    echo "full" >"$state_file"
-  fi
+  "Charging" | "Unknown" | "Not charging")
+    if ((remaining_capacity >= 100)) && [[ $last_state != "full" && $last_state != "charging" ]]; then
+      notify-send "🔋 Full Charge" "Device is fully charged."
+      set_state "full"
+
+    elif ((remaining_capacity < 100)) && [[ $last_state != "charging" ]]; then
+      notify-send "🔌 Charging" "Device is charging now."
+      set_state "charging"
+    fi
+    ;;
+
+  "Full")
+    if [[ $last_state != "full" ]]; then
+      notify-send "🔋 Full Charge" "Device is fully charged."
+      set_state "full"
+    fi
+    ;;
+  esac
 }
 
 check_battery

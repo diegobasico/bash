@@ -1,0 +1,10 @@
+[Unit]
+Description=Checks battery status every 5 seconds
+
+[Timer]
+OnActiveSec=5s
+OnUnitActiveSec=5s
+Persistent=true
+
+[Install]
+WantedBy=timers.target
