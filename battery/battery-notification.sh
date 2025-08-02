@@ -33,7 +33,7 @@ check_battery() {
   case "$battery_status" in
   "Discharging")
     if ((remaining_capacity <= critical)) && [[ $last_state != "critical" ]]; then
-      notify-send -u critical "⚠️ Critical Low Battery" "Battery is at ${remaining_capacity}%"
+      notify-send -u critical "⚠️ Critical Battery Level" "Battery is at ${remaining_capacity}%"
       set_state "critical"
 
     elif ((remaining_capacity <= lower)) && [[ $last_state != "lower" ]]; then
