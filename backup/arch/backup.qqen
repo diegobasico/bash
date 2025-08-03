@@ -5,6 +5,7 @@ base-devel
 bat
 brightnessctl
 btop
+calibre
 chezmoi
 docker
 docker-compose
