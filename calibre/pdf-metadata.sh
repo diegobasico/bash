@@ -8,20 +8,15 @@ cd "$TARGET_DIR" || {
 }
 
 log_file="$TARGET_DIR/pdf_metadata.log"
-
-if [[ -e $log_file ]]; then
-  rm "$log_file"
-fi
+[[ -e $log_file ]] && rm "$log_file"
 
 pdf_files=(**/*.pdf)
-
 if [[ ${#pdf_files[@]} -eq 0 ]]; then
   echo "❌ No PDF files found in $TARGET_DIR" | tee -a "$log_file"
   exit 1
 fi
 
 total_files=${#pdf_files[@]}
-current_file=0
 bar_progress=0
 
 draw_progress_bar() {
@@ -43,65 +38,79 @@ log() {
   draw_progress_bar "$bar_progress" "$total_files"
 }
 
+# Group files by directory (series)
+declare -A series_files
 for file in "${pdf_files[@]}"; do
-  ((current_file++))
+  dir="$(dirname "$file")"
+  series_files["$dir"]+="$file"$'\n'
+done
 
-  log "($current_file/$total_files) Processing: $file"
+for dir in "${!series_files[@]}"; do
+  IFS=$'\n' read -rd '' -a files <<<"$(printf '%s' "${series_files["$dir"]}" | sort)"
+  for idx in "${!files[@]}"; do
+    ((current_file++))
+    file="${files[$idx]}"
+    series_dir=$(basename "$dir")
+    series_index=$((idx + 1))
 
-  title=$(ebook-meta "$file" | awk -F': *' '/^Title/ {print $2}')
-  authors=$(ebook-meta "$file" | awk -F': *' '/^Author\(s\)/ {print $2}' | sed 's/, */ \& /g')
+    log "($current_file/$total_files) Processing: $file"
 
-  if [[ -z "$title" || -z "$authors" ]]; then
-    log "($current_file/$total_files) Missing title or authors, skipping: $file"
-    continue
-  fi
+    title=$(ebook-meta "$file" | awk -F': *' '/^Title/ {print $2}')
+    authors=$(ebook-meta "$file" | awk -F': *' '/^Author\(s\)/ {print $2}' | sed 's/, */ \& /g')
 
-  log "($current_file/$total_files) Fetching metadata for: $title by $authors"
-  opf_file=$(mktemp --suffix=.opf)
-  fetch-ebook-metadata --title "$title" --authors "$authors" --opf >"$opf_file" 2>>"$log_file"
+    if [[ -z "$title" || -z "$authors" ]]; then
+      log "($current_file/$total_files) Missing title or authors, skipping: $file"
+      ((bar_progress++))
+      continue
+    fi
 
-  if grep -q '<dc:title' "$opf_file"; then
-    log "($current_file/$total_files) ✅ Metadata found, embedding into file for: $file"
-    ebook-meta "$file" --from-opf "$opf_file" >>"$log_file" 2>&1
-  else
-    log "($current_file/$total_files) ❌ No metadata found for: $file"
-    metadata=()
-    while IFS=':' read -r key value; do
-      key=$(echo "$key" | tr -d '\r' | xargs)
-      value=$(echo "$value" | xargs)
-      case "$key" in
-      Title) metadata+=(--title "$value") ;;
-      "Author(s)")
-        stripped_authors=$(echo "$value" | sed 's/\[[^][]*\]//g' | xargs)
-        metadata+=(--authors "$stripped_authors")
-        ;;
-      Publisher) metadata+=(--publisher "$value") ;;
-      Tags) metadata+=(--tags "$value") ;;
-      Languages) metadata+=(--language "$value") ;;
-      Series) metadata+=(--series "$value") ;;
-      "Series Index") metadata+=(--index "$value") ;;
-      Rating) metadata+=(--rating "$value") ;;
-      Published) metadata+=(--date "$value") ;;
-      Identifiers)
-        while IFS=',' read -ra ids; do
-          for id in "${ids[@]}"; do
-            key_val=$(echo "$id" | xargs)
-            id_type=${key_val%%:*}
-            id_val=${key_val#*:}
-            metadata+=(--identifier "$id_type:$id_val")
-          done
-        done <<<"$value"
-        ;;
-      esac
-    done < <(ebook-meta "$file")
+    log "($current_file/$total_files) Fetching metadata for: $title by $authors"
+    opf_file=$(mktemp --suffix=.opf)
+    fetch-ebook-metadata --title "$title" --authors "$authors" --opf >"$opf_file" 2>>"$log_file"
 
-    ebook-meta "$file" "${metadata[@]}" >>"$log_file" 2>&1
-    log "($current_file/$total_files) ✔️ Metadata extracted from filename for: $file"
-  fi
+    if grep -q '<dc:title' "$opf_file"; then
+      ebook-meta "$file" --from-opf "$opf_file" --series "$series_dir" --index "$series_index" >>"$log_file" 2>&1
+      log "($current_file/$total_files) ✅ Metadata found, embedding into file for: $file"
+    else
+      log "($current_file/$total_files) ❌ No metadata found for: $file"
+      metadata=()
+      while IFS=':' read -r key value; do
+        key=$(echo "$key" | tr -d '\r' | xargs)
+        value=$(echo "$value" | xargs)
+        case "$key" in
+        Title) metadata+=(--title "$value") ;;
+        "Author(s)")
+          stripped_authors=$(echo "$value" | sed 's/\[[^][]*\]//g' | xargs)
+          metadata+=(--authors "$stripped_authors")
+          ;;
+        Publisher) metadata+=(--publisher "$value") ;;
+        Tags) metadata+=(--tags "$value") ;;
+        Languages) metadata+=(--language "$value") ;;
+        Series) metadata+=(--series "$series_dir") ;; # Override with folder name
+        "Series Index") continue ;;                   # Ignore OPF value
+        Rating) metadata+=(--rating "$value") ;;
+        Published) metadata+=(--date "$value") ;;
+        Identifiers)
+          while IFS=',' read -ra ids; do
+            for id in "${ids[@]}"; do
+              key_val=$(echo "$id" | xargs)
+              id_type=${key_val%%:*}
+              id_val=${key_val#*:}
+              metadata+=(--identifier "$id_type:$id_val")
+            done
+          done <<<"$value"
+          ;;
+        esac
+      done < <(ebook-meta "$file")
 
-  rm -f "$opf_file"
+      metadata+=(--series "$series_dir" --index "$series_index")
+      ebook-meta "$file" "${metadata[@]}" >>"$log_file" 2>&1
+      log "($current_file/$total_files) ✔️ Metadata extracted from file for: $file"
+    fi
 
-  ((bar_progress++))
+    rm -f "$opf_file"
+    ((bar_progress++))
+  done
 done
 
 draw_progress_bar "$bar_progress" "$total_files"
