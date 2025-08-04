@@ -65,6 +65,38 @@ for file in "${pdf_files[@]}"; do
     ebook-meta "$file" --from-opf "$opf_file" >>"$log_file" 2>&1
   else
     log "($current_file/$total_files) ❌ No metadata found for: $file"
+    metadata=()
+    while IFS=':' read -r key value; do
+      key=$(echo "$key" | tr -d '\r' | xargs)
+      value=$(echo "$value" | xargs)
+      case "$key" in
+      Title) metadata+=(--title "$value") ;;
+      "Author(s)")
+        stripped_authors=$(echo "$value" | sed 's/\[[^][]*\]//g' | xargs)
+        metadata+=(--authors "$stripped_authors")
+        ;;
+      Publisher) metadata+=(--publisher "$value") ;;
+      Tags) metadata+=(--tags "$value") ;;
+      Languages) metadata+=(--language "$value") ;;
+      Series) metadata+=(--series "$value") ;;
+      "Series Index") metadata+=(--index "$value") ;;
+      Rating) metadata+=(--rating "$value") ;;
+      Published) metadata+=(--date "$value") ;;
+      Identifiers)
+        while IFS=',' read -ra ids; do
+          for id in "${ids[@]}"; do
+            key_val=$(echo "$id" | xargs)
+            id_type=${key_val%%:*}
+            id_val=${key_val#*:}
+            metadata+=(--identifier "$id_type:$id_val")
+          done
+        done <<<"$value"
+        ;;
+      esac
+    done < <(ebook-meta "$file")
+
+    ebook-meta "$file" "${metadata[@]}" >>"$log_file" 2>&1
+    log "($current_file/$total_files) ✔️ Metadata extracted from filename for: $file"
   fi
 
   rm -f "$opf_file"
