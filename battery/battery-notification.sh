@@ -32,21 +32,27 @@ set_state() {
 check_battery() {
   case "$battery_status" in
   "Discharging")
-    if ((remaining_capacity <= critical)) && [[ $last_state != "critical" ]]; then
-      notify-send -u critical "⚠️ Critical Battery Level" "Battery is at ${remaining_capacity}%"
-      set_state "critical"
+    if ((remaining_capacity <= critical)); then
+      if [[ $last_state != "critical" ]]; then
+        notify-send -u critical "⚠️ Critical Battery Level" "Battery is at ${remaining_capacity}%"
+        set_state "critical"
+      fi
 
-    elif ((remaining_capacity <= lower)) && [[ $last_state != "lower" ]]; then
-      notify-send -u critical "🪫 Very Low Battery" "Battery is at ${remaining_capacity}%"
-      set_state "lower"
-
-    elif ((remaining_capacity <= low)) && [[ $last_state != "low" ]]; then
-      notify-send -u critical "🪫 Low Battery" "Battery is at ${remaining_capacity}%"
-      set_state "low"
-
-    elif ((remaining_capacity > low)) && [[ $last_state != "high" ]]; then
-      notify-send "🔋 Disconnected" "Battery is at ${remaining_capacity}%"
-      set_state "high"
+    elif ((remaining_capacity <= lower)); then
+      if [[ $last_state != "lower" ]]; then
+        notify-send -u critical "🪫 Very Low Battery" "Battery is at ${remaining_capacity}%"
+        set_state "lower"
+      fi
+    elif ((remaining_capacity <= low)); then
+      if [[ $last_state != "low" ]]; then
+        notify-send -u critical "🪫 Low Battery" "Battery is at ${remaining_capacity}%"
+        set_state "low"
+      fi
+    elif ((remaining_capacity > low)); then
+      if [[ $last_state != "high" ]]; then
+        notify-send "🔋 Disconnected" "Battery is at ${remaining_capacity}%"
+        set_state "high"
+      fi
     fi
     ;;
 
