@@ -1,4 +1,5 @@
 7zip
+alsa-utils
 amd-ucode
 base
 base-devel
@@ -44,6 +45,8 @@ linux
 linux-firmware
 linux-lts
 ly
+man-db
+man-pages
 mousepad
 mpv
 nano
@@ -52,9 +55,12 @@ networkmanager
 nm-connection-editor
 nodejs
 noto-fonts
+noto-fonts-cjk
 noto-fonts-emoji
+noto-fonts-extra
 npm
 obsidian
+openssh
 os-prober
 otf-font-awesome
 pacman-contrib
@@ -66,8 +72,9 @@ perl-image-exiftool
 perl-rename
 perl-yaml-tiny
 pipewire
+pipewire-alsa
+pipewire-pulse
 playerctl
-pulseaudio
 qbittorrent
 qpdf
 qt5-wayland
@@ -119,6 +126,7 @@ tree
 ttf-firacode-nerd
 tumbler
 unzip
+uv
 vlc
 vlc-plugins-all
 waybar
@@ -175,17 +183,14 @@ xorg-docs
 xorg-font-util
 xorg-fonts-100dpi
 xorg-fonts-75dpi
-xorg-fonts-encodings
 xorg-iceauth
 xorg-mkfontscale
 xorg-server
-xorg-server-common
 xorg-server-devel
 xorg-server-xephyr
 xorg-server-xnest
 xorg-server-xvfb
 xorg-sessreg
-xorg-setxkbmap
 xorg-smproxy
 xorg-x11perf
 xorg-xauth
@@ -198,7 +203,6 @@ xorg-xev
 xorg-xgamma
 xorg-xhost
 xorg-xinput
-xorg-xkbcomp
 xorg-xkbevd
 xorg-xkbutils
 xorg-xkill
@@ -206,14 +210,12 @@ xorg-xlsatoms
 xorg-xlsclients
 xorg-xmodmap
 xorg-xpr
-xorg-xprop
 xorg-xrandr
 xorg-xrdb
 xorg-xrefresh
 xorg-xset
 xorg-xsetroot
 xorg-xvinfo
-xorg-xwayland
 xorg-xwd
 xorg-xwininfo
 xorg-xwud
